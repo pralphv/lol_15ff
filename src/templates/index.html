@@ -1,0 +1,204 @@
+<!doctype html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    <title>League</title>
+    <link rel="stylesheet" href="static/styles.css">
+</head>
+
+<body>
+<div id="content">
+    <h3 id="status">Loading</h3>
+    <div>
+        <span>Predict</span>
+        <span id="winning-team-prediction"></span>
+    </div>
+    <div class="table">
+        <p class="blue team-name">Team 1</p>
+        <div class="users" id="myTeam"></div>
+    </div>
+    <div class="table">
+        <p class="red team-name">Team 2</p>
+        <div class="users" id="enemyTeam"></div>
+    </div>
+</div>
+</body>
+
+<script>
+const GAME_STATE_URL = "/game-state";
+const INGAME_URL = "/ingame-bundle";
+const CHAMP_SELECT_URL = "/champion-select-bundle";
+const ACCEPT_GAME_URL = "/accept-game";
+const PREDICT_URL = "/predict";
+const CHECK_GAME_TIME_URL = "/check-game-time";
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+function formatDate(date) {
+    const d = new Date(date);
+    let month = '' + (d.getMonth() + 1);
+    let day = '' + d.getDate();
+    const year = d.getFullYear();
+
+    let hour = d.getHours();
+    let minute = d.getMinutes();
+
+    if (month.length < 2) {
+        month = '0' + month;
+    }
+    if (day.length < 2){
+        day = '0' + day;
+    }
+    if (hour < 10) {
+        hour = '0' + hour;
+    }
+    if (minute < 10){
+        minute = '0' + minute;
+    }
+
+    return `${year}-${month}-${day} ${hour}:${minute}`;
+}
+
+function buildTable(data, targetDiv) {
+    data.forEach((userObj, i) => {
+        const rowDiv = document.createElement("div");
+        rowDiv.classList.add("user-match-history");
+        if (i % 2 !== 0) {
+            rowDiv.classList.add("alt-row");
+        }
+
+        const nameDiv = document.createElement("div");
+        nameDiv.classList.add("username");
+
+        nameDiv.innerHTML = userObj.summonerName;
+        rowDiv.appendChild(nameDiv);
+
+        const matchesDiv = document.createElement("div");
+        matchesDiv.classList.add("match-history");
+        const flexObj = userObj.ranked_stats.flex;
+        const soloObj = userObj.ranked_stats.solo;
+
+        const flexRankDiv = document.createElement("p");
+        const soloRankDiv = document.createElement("p");
+        flexRankDiv.innerHTML = `Flex: ${flexObj.tier} ${flexObj.division}`
+        flexRankDiv.classList.add("rank");
+        soloRankDiv.innerHTML = `Solo: ${soloObj.tier} ${soloObj.division}`
+        soloRankDiv.classList.add("rank");
+
+        nameDiv.appendChild(soloRankDiv)
+        nameDiv.appendChild(flexRankDiv)
+
+        userObj.gameHistory.forEach(matchObj => {
+            const matchDiv = document.createElement("div");
+            const kdaDiv = document.createElement("p");
+            const champDiv = document.createElement("p");
+            kdaDiv.innerHTML = `${matchObj.kills}/${matchObj.deaths}/${matchObj.assists}`;
+            champDiv.innerHTML = matchObj.champion;
+            const classToAdd = matchObj.win ? "win-cell": "lose-cell";
+            matchDiv.classList.add("match");
+            kdaDiv.classList.add(classToAdd);
+            champDiv.classList.add("champion");
+
+            const hoverDiv = document.createElement("div");
+            hoverDiv.innerHTML = formatDate(matchObj.gameCreation);
+            hoverDiv.classList.add("hoverBox");
+
+            matchDiv.appendChild(kdaDiv);
+            matchDiv.appendChild(champDiv);
+            matchDiv.appendChild(hoverDiv);
+            matchesDiv.appendChild(matchDiv);
+        })
+        rowDiv.appendChild(matchesDiv);
+        targetDiv.appendChild(rowDiv);
+    })
+}
+
+let GAME_STATE = null;
+
+function updateStatus(status) {
+    document.getElementById("status").innerHTML = status;
+}
+
+function updatePrediction(prediction) {
+    document.getElementById("winning-team-prediction").innerHTML = prediction;
+}
+
+async function predictWinningTeam(model){
+    let predictResp = await fetch(`${PREDICT_URL}?model=${model}`);
+    predictResp = await predictResp.json();
+    const winningTeam = predictResp["payload"];
+    return winningTeam;
+}
+
+async function main() {
+    while (true) {
+        let gameStateResp;
+        try {
+            gameStateResp = await fetch(GAME_STATE_URL);
+            gameStateResp = await gameStateResp.json();
+            const gameState = gameStateResp.msg;
+            if (GAME_STATE !== "In Game" && gameState === "In Game") {
+                const resp = await fetch(INGAME_URL);
+                const data = await resp.json();
+                updateStatus(data.msg);
+
+                const myTeamDiv = document.getElementById("myTeam");
+                const enemyTeamDiv = document.getElementById("enemyTeam");
+                myTeamDiv.innerHTML = "";
+                enemyTeamDiv.innerHTML = "";
+                buildTable(data.payload["team1"], myTeamDiv);
+                buildTable(data.payload["team2"], enemyTeamDiv);
+            } else if (gameState === "not running") {
+                GAME_STATE = gameState;
+            } else if (GAME_STATE !== "In champion select" && gameState === "In champion select") {
+                GAME_STATE = gameState;
+                const resp = await fetch(CHAMP_SELECT_URL);
+                const data = await resp.json();
+
+                updateStatus(data.msg);
+
+                const myTeamDiv = document.getElementById("myTeam");
+                const enemyTeamDiv = document.getElementById("enemyTeam");
+                myTeamDiv.innerHTML = "";
+                enemyTeamDiv.innerHTML = "";
+                buildTable(data.payload, myTeamDiv);
+            } else if (gameState == "ReadyCheck") {
+                const resp = await fetch(ACCEPT_GAME_URL);
+            } else if (gameState == "In Game") {
+                const resp = await fetch(CHECK_GAME_TIME_URL);
+                let gameTime = await resp.json();
+                gameTime = gameTime.payload;
+                if ( 463 >= gameTime  && gameTime >= 460) {
+                    // predict 15 min
+                    const winningTeam = await predictWinningTeam(15);
+                    updatePrediction(winningTeam);
+                }
+                if ( 1203 >= gameTime  && gameTime >= 1200) {
+                    // predict 20 min
+                    const winningTeam = predictWinningTeam(20);
+                    updatePrediction(winningTeam);
+                }
+            }
+            if (gameState !== "In Game"){
+                updatePrediction("");
+            }
+            updateStatus(gameState);
+            GAME_STATE = gameState;
+            await sleep(2000);
+        } catch (error) {
+            updateStatus("Please open the app");
+        }
+    }
+}
+
+main()
+
+
+
+
+</script>
+</html>

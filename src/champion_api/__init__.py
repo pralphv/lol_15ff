@@ -1,0 +1,1 @@
+from .api import fetch_champion_id_map

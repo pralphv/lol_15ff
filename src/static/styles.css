@@ -1,0 +1,98 @@
+body {
+    background : #151515;
+    color: #fff;
+    margin: 0;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", "Oxygen",
+    "Ubuntu", "Cantarell", "Fira Sans", "Droid Sans", "Helvetica Neue",
+    sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    max-width: 100%;
+}
+
+#content {
+}
+
+.table{
+    width: fit-content;
+    background: #262626;
+}
+
+.user-match-history {
+    background: #1B1B1B;
+}
+
+.alt-row {
+    background: #262626;
+}
+
+.users {
+    background: #1B1B1B;
+}
+
+.team-name{
+    padding: 0px 10px;
+}
+
+.match {
+    padding: 0px 20px;
+    white-space: nowrap;
+    display: inline-block;
+    text-align: right;
+}
+
+.champion{
+    font-size: 12px;
+}
+
+.rank{
+    margin: 0px;
+    white-space: nowrap;
+    display: inline-block;
+    font-size: 12px;
+}
+
+.username{
+    padding: 0px 20px;
+    display: inline-block;
+    width: 100px;
+}
+
+.match-history {
+    display: inline-block;
+}
+
+.win-cell {
+    border: 0px solid;
+    color: #489A51;
+}
+
+.lose-cell {
+    border: 0px solid;
+    color: #ED4E43;
+}
+
+.blue {
+    color: #49b4ff;
+}
+
+.red {
+    color: #ff5859;
+}
+
+.hoverBox {
+    display: none;
+    z-index: 1000;
+    position: absolute;
+    padding: 10px 10px;
+    background: #494949;
+    color: #fff;
+}
+
+.match:hover .hoverBox{
+    display: block;
+}
+
+#winning-team-prediction{
+    font-weight: 900;
+}
