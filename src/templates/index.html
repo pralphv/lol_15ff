@@ -71,26 +71,28 @@ function buildTable(data, targetDiv) {
             rowDiv.classList.add("alt-row");
         }
 
+        const userDiv = document.createElement("div");
         const nameDiv = document.createElement("div");
-        nameDiv.classList.add("username");
-
-        nameDiv.innerHTML = userObj.summonerName;
-        rowDiv.appendChild(nameDiv);
+        nameDiv.classList.add("name");
+        userDiv.classList.add("user");
+        nameDiv.innerHTML = userObj.champion || userObj.summonerName;
+        userDiv.appendChild(nameDiv);
+        rowDiv.appendChild(userDiv);
 
         const matchesDiv = document.createElement("div");
         matchesDiv.classList.add("match-history");
         const flexObj = userObj.ranked_stats.flex;
         const soloObj = userObj.ranked_stats.solo;
 
-        const flexRankDiv = document.createElement("p");
-        const soloRankDiv = document.createElement("p");
+        const flexRankDiv = document.createElement("div");
+        const soloRankDiv = document.createElement("div");
         flexRankDiv.innerHTML = `Flex: ${flexObj.tier} ${flexObj.division}`
         flexRankDiv.classList.add("rank");
         soloRankDiv.innerHTML = `Solo: ${soloObj.tier} ${soloObj.division}`
         soloRankDiv.classList.add("rank");
 
-        nameDiv.appendChild(soloRankDiv)
-        nameDiv.appendChild(flexRankDiv)
+        userDiv.appendChild(soloRankDiv)
+        userDiv.appendChild(flexRankDiv)
 
         userObj.gameHistory.forEach(matchObj => {
             const matchDiv = document.createElement("div");
@@ -128,9 +130,10 @@ function updatePrediction(prediction) {
 }
 
 async function predictWinningTeam(model){
-    let predictResp = await fetch(`${PREDICT_URL}?model=${model}`);
-    predictResp = await predictResp.json();
-    const winningTeam = predictResp["payload"];
+    const resp = await fetch(`${PREDICT_URL}?model=${model}`);
+    const data = await resp.json();
+    const winningTeamId = data["payload"];
+    const winningTeam = winningTeamId === "100" ? "Bottom Team" : "Top Team";
     return winningTeam;
 }
 
@@ -172,24 +175,25 @@ async function main() {
                 const resp = await fetch(CHECK_GAME_TIME_URL);
                 let gameTime = await resp.json();
                 gameTime = gameTime.payload;
-                if ( 463 >= gameTime  && gameTime >= 460) {
+                if ( 903 >= gameTime && gameTime >= 900) {
                     // predict 15 min
                     const winningTeam = await predictWinningTeam(15);
                     updatePrediction(winningTeam);
                 }
-                if ( 1203 >= gameTime  && gameTime >= 1200) {
+                if ( 1203 >= gameTime && gameTime >= 1200) {
                     // predict 20 min
-                    const winningTeam = predictWinningTeam(20);
+                    const winningTeam = await predictWinningTeam(20);
                     updatePrediction(winningTeam);
                 }
             }
-            if (gameState !== "In Game"){
+            if (gameState === "In champion select"){
                 updatePrediction("");
             }
             updateStatus(gameState);
             GAME_STATE = gameState;
             await sleep(2000);
         } catch (error) {
+            console.log(error);
             updateStatus("Please open the app");
         }
     }

@@ -4,9 +4,11 @@ import requests
 try:
     import lockfile
     from .. import summoner_api
+    from .. import live_client_data
 except ImportError:
     from src.league_client_api import lockfile
     from src import summoner_api
+    from src import live_client_data
 
 USER_DETAILS = 'https://127.0.0.1:{{port}}/lol-summoner/v1/summoners/{summoner_id}'
 MY_TEAM_SUMMONERS = 'https://127.0.0.1:{port}/lol-champ-select/v1/session'
@@ -47,14 +49,22 @@ def find_account_ids_by_summoner_id(summoner_id: int) -> Dict:
 def fetch_my_teams_match_history() -> List[Dict]:
     resp = request_to_league_client(MY_TEAM_SUMMONERS)
     content = resp.json()
+    print(content)
     try:
-        summoner_ids = list(map(lambda obj: obj['summonerId'], content['myTeam']))
+        summoners = list(map(
+            lambda obj: {
+                'summoner_id': obj['summonerId'],
+                'championId': obj['championId'],
+            }
+            ,
+            content['myTeam'])
+        )
         account_ids = map(
-            lambda summoner_id: {
-                **find_account_ids_by_summoner_id(summoner_id),
-                'summoner_id': summoner_id
+            lambda summoner_obj: {
+                **find_account_ids_by_summoner_id(summoner_obj['summoner_id']),
+                **summoner_obj
             },
-            summoner_ids
+            summoners
         )
         summoner_match_history = map(
             lambda account_obj: {
@@ -86,9 +96,11 @@ def fetch_game_players() -> Dict:
     resp = request_to_league_client(PLAYERS)
     team_1 = resp.json()['gameData']['teamOne']
     team_2 = resp.json()['gameData']['teamTwo']
+    summoner_to_champion_map = live_client_data.fetch_summoner_champion_map()
     team_1 = map(
         lambda obj: {
             'summonerName': obj['summonerName'],
+            'champion': summoner_to_champion_map[obj['summonerName']],
             **summoner_api.fetch_summoner_match_history('TW', int(obj['accountId']), float('inf')),
             'ranked_stats': fetch_ranked_stats(puuid=obj['puuid'])
         },
@@ -97,6 +109,7 @@ def fetch_game_players() -> Dict:
     team_2 = map(
         lambda obj: {
             'summonerName': obj['summonerName'],
+            'champion': summoner_to_champion_map[obj['summonerName']],
             **summoner_api.fetch_summoner_match_history('TW', int(obj['accountId']), float('inf')),
             'ranked_stats': fetch_ranked_stats(puuid=obj['puuid'])
         },
@@ -108,7 +121,7 @@ def fetch_game_players() -> Dict:
 def fetch_game_status() -> str:
     try:
         resp = request_to_league_client(GAME_STATUS)
-        return resp.text[1:-1]  # "InProgress"
+        return resp.text[1:-1]  # "InProgress", not InProgress
     except Exception as e:
         print(e)
         return 'not running'

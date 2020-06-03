@@ -1,1 +1,1 @@
-from .api import fetch_game_players, fetch_game_players_match_history
+from .api import fetch_summoner_champion_map

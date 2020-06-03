@@ -12,12 +12,12 @@ app = Flask(__name__)
 try:
     from .summoner_api import fetch_summoner_match_history
     from .league_client_api import fetch_my_teams_match_history, fetch_game_players, fetch_game_status, accept_match
-    from .live_client_data import fetch_game_players_match_history
+    from .live_client_data import fetch_summoner_champion_map
     from .game_api import fetch_game_stats, fetch_game_time
 except ImportError:
     from summoner_api import fetch_summoner_match_history
     from league_client_api import fetch_my_teams_match_history, fetch_game_players, fetch_game_status, accept_match
-    from live_client_data import fetch_game_players_match_history
+    from live_client_data import fetch_summoner_champion_map
     from game_api import fetch_game_stats, fetch_game_time
 
 PREDICTION_URL = 'https://lol-15ff-model.herokuapp.com/'
@@ -79,7 +79,7 @@ def fetch_ingame_history():
         'msg': 'In Game',
         'payload': players_obj
     })
-    return make_response(resp, 404)
+    return make_response(resp, 200)
 
 
 @app.route("/predict")
@@ -113,9 +113,9 @@ def check_game_time():
 
 
 if __name__ == '__main__':
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.bind(('localhost', 0))
-    port = sock.getsockname()[1]
-    sock.close()
-    webbrowser.open_new(f'http://127.0.0.1:{port}/')
-    app.run(debug=False, port=port)
+    # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # sock.bind(('localhost', 0))
+    # port = sock.getsockname()[1]
+    # sock.close()
+    # webbrowser.open_new(f'http://127.0.0.1:{port}/')
+    app.run(debug=True, port=5000)
