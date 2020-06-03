@@ -52,12 +52,15 @@ body {
     font-size: 12px;
 }
 
-.username{
+.user{
     padding: 0px 20px;
     display: inline-block;
     width: 100px;
 }
 
+.name {
+    white-space: nowrap;
+}
 .match-history {
     display: inline-block;
 }
