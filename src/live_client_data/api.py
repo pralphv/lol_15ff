@@ -19,6 +19,7 @@ def fetch_summoner_champion_map() -> Dict:
     url = 'https://127.0.0.1:2999/liveclientdata/playerlist'
     resp = requests.get(url, verify=False)
     list_of_objects = resp.json()
+
     name_to_champion_map = {obj['summonerName']: obj['championName'] for obj in list_of_objects}
     return name_to_champion_map
 

@@ -39,6 +39,7 @@ body {
     white-space: nowrap;
     display: inline-block;
     text-align: right;
+    width: 50px;
 }
 
 .champion{
@@ -98,4 +99,7 @@ body {
 
 #winning-team-prediction{
     font-weight: 900;
+}
+
+#prediction{
 }

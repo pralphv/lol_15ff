@@ -80,7 +80,8 @@ def fetch_my_teams_match_history() -> List[Dict]:
 
 def fetch_ranked_stats(summoner_id: int = None, puuid: str = None):
     if not summoner_id and not puuid:
-        raise RuntimeError('Must provide either summoner_id or puuid')
+        return None
+        # raise RuntimeError('Must provide either summoner_id or puuid')
     if not puuid:
         puuid = find_account_ids_by_summoner_id(summoner_id)['puuid']
     resp = request_to_league_client(RANK_STATS.format(puuid=puuid))
@@ -106,6 +107,7 @@ def fetch_game_players() -> Dict:
         },
         team_1
     )
+
     team_2 = map(
         lambda obj: {
             'summonerName': obj['summonerName'],
@@ -136,7 +138,7 @@ def accept_match():
 
 
 def main():
-    print(accept_match())
+    print(fetch_my_teams_match_history())
     return
     import time
     while True:

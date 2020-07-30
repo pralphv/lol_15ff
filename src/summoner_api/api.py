@@ -36,6 +36,12 @@ def _extract_stats(row):
 def fetch_summoner_match_history(region: str, summoner_id: int, game_id: Union[int, float]) -> Dict:
     summoner_object = _fetch_summoner_history(region, summoner_id)
     summoner_df = _filter_last_n_ranked_games(summoner_object, 5, game_id)
+    if len(summoner_df) == 0:
+        summoner_match_history = {
+            'summonerName': summoner_object['games']['games'][0]['participantIdentities'][0]['player'],
+            'gameHistory': []
+        }
+        return summoner_match_history
     summoner_df[ATTRIBUTES] = summoner_df.apply(
         _extract_stats,
         axis=1,
