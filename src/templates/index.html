@@ -11,7 +11,7 @@
 <body>
 <div id="content">
     <h3 id="status">Loading</h3>
-    <div>
+    <div id="prediction">
         <span>Predict</span>
         <span id="winning-team-prediction"></span>
     </div>
@@ -191,11 +191,12 @@ async function main() {
             }
             updateStatus(gameState);
             GAME_STATE = gameState;
-            await sleep(2000);
         } catch (error) {
             console.log(error);
-            updateStatus("Please open the app");
+            updateStatus("An error has occurred. Is the app open?");
         }
+        await sleep(2000);
+
     }
 }
 
